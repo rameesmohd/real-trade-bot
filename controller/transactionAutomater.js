@@ -17,7 +17,7 @@ const formatTxid = (txid) => {
       return `${firstFour}...${lastFour}`;
 };
       
-const sendWithdrawMessage = async ({user,amount,transaction}) => {
+const sendWithdrawMessage = async ({user,amount,transaction,type}) => {
       const fName =user.length > 3 ? `${user.substring(0, 3)}...` : user
       const escapedFName = escapeMarkdownV2(fName);
       const nAmount = parseFloat(amount).toFixed(2).toString().replace(/\./g, '\\.');
@@ -37,7 +37,10 @@ const sendWithdrawMessage = async ({user,amount,transaction}) => {
       
       const params = {
         chat_id: channelId,
-        photo: 'https://res.cloudinary.com/dj5inosqh/image/upload/v1726058380/IMG_1440_izjgwv.png',
+        photo: 
+          type==='payout' 
+            ? 'https://res.cloudinary.com/dj5inosqh/image/upload/v1726167463/IMG_1444_o6wjzi.png' 
+            : 'https://res.cloudinary.com/dj5inosqh/image/upload/v1726058380/IMG_1440_izjgwv.png',
         caption: caption, 
         parse_mode: 'MarkdownV2',
         reply_markup: JSON.stringify({
@@ -184,7 +187,7 @@ const notifyTransactions = async({type,wallet})=> {
               
               const targetTransaction = transactions.find(tx => {
                   const amount = parseFloat(tx.quant) / 1e6;
-                  return amount >= 500 && amount < 3000;
+                  return amount >= 500 && amount < 3000 && amount % 5 !== 0;;
               });
 
               const selectedTransaction = targetTransaction || transactions[0];
@@ -199,10 +202,43 @@ const notifyTransactions = async({type,wallet})=> {
                   user: userName,
                   amount: amount,
                   wallet: 'main',
-                  transaction: selectedTransaction.transaction_id
+                  transaction: selectedTransaction.transaction_id,
+                  type:'withdraw'
               });
           }
       }
+      if(type == 'payout'){
+        if(wallet=='usdt'){
+            const transactions = await fetchUsdtTransactions();
+            if (transactions.length === 0) {
+                console.log('No transactions in the specified range.');
+                return;
+            }
+
+            console.log(transactions.length , 'transactions');
+            
+            const targetTransaction = transactions.find(tx => {
+                const amount = parseFloat(tx.quant) / 1e6;
+                return amount >= 20 && amount < 200;
+            });
+
+            const selectedTransaction = targetTransaction 
+            console.log( 'target withdraw transaction :',selectedTransaction );
+            const amount = parseFloat(selectedTransaction.quant) / 1e6;
+            
+            if(selectedTransaction == null){
+                return;
+            }
+
+            await sendWithdrawMessage({
+                user: userName,
+                amount: amount,
+                wallet: 'main',
+                transaction: selectedTransaction.transaction_id,
+                 type:'payout'
+            });
+        }
+    }
     } catch (error) {
         console.error('Unexpected error in notifyTransactions function:', error);
     }
