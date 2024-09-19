@@ -47,10 +47,14 @@ const sendWithdrawMessage = async ({user,amount,transaction,type}) => {
           inline_keyboard: [
             [
               {
-                text: 'Open Channel',
-                url: 't.me/+v9Qgh0SSd_VhY2U1',
+                text: 'Discord',
+                url: 'https://discord.gg/67PcC6U4db',
+              },
+              {
+                text: 'Login',
+                url: 'https://www.realtradecapital.com/login',
               }
-            ]
+            ], 
           ],
         }),
       };
