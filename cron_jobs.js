@@ -35,6 +35,13 @@ const randomPayoutNotify = async() => {
 cron.schedule('0 0 * * *', randomNotify)
 cron.schedule('0 0 * * *', randomPayoutNotify)
 
+
+// const test=async()=>{
+//     notifyTransactions({ type: 'withdraw', wallet: 'usdt' })
+// }
+
+// test()
+
 module.exports = {
     randomNotify
 };

@@ -2,6 +2,7 @@ const botToken = process.env.BOT_API;
 const channelId = process.env.CHANNEL_ID
 const TRC20_CONTRACT = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
 const axios = require('axios');
+const {getRandomCountryByName,names} = require('./helper')
 
 const escapeMarkdownV2 = (text) => {
     text = String(text);
@@ -16,7 +17,35 @@ const formatTxid = (txid) => {
       const lastFour = txid.substring(txid.length - 10);
       return `${firstFour}...${lastFour}`;
 };
-      
+
+const addToWidrawList = async({transaction,user,amount})=>{
+  try {   
+
+    // Prepare payload for the API
+    const apiPayload = {
+      txnId: transaction,
+      name: user,
+      country: getRandomCountryByName(user), // Assign random country here
+      amount: parseFloat(amount).toFixed(2),
+    };
+
+    console.log("test ::::::::::::::: ",apiPayload);
+    
+    // API call
+    const apiUrl = `${process.env.MAIN_SERVER_URL}/admin/withdrawal`;
+
+    await axios.post(apiUrl, {formValue : apiPayload}, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+  } catch (error) {
+    console.error('Error sending withdraws to list :', error);
+    return false
+  }
+}
+    
 const sendWithdrawMessage = async ({user,amount,transaction,type}) => {
       const fName =user.length > 3 ? `${user.substring(0, 3)}...` : user
       const escapedFName = escapeMarkdownV2(fName);
@@ -62,6 +91,8 @@ const sendWithdrawMessage = async ({user,amount,transaction,type}) => {
       try {
         const response = await axios.post(url, params);
         // console.log('Photo sent successfully:', response.data);
+
+        await addToWidrawList({transaction,user,amount})
       } catch (error) {
         console.error('Error sending photo:', error.response ? error.response.data : error.message);
       }
@@ -112,57 +143,6 @@ const fetchUsdtTransactions = async()=> {
         return [];
     }
 }
-
-const names = {
-      en: [
-        // Western/Christian
-    'Alice', 'Bob', 'Charlie', 'David', 'Eva', 'Frank', 'Grace', 'Hannah', 'Ivy', 'Jack', 
-    'Katherine', 'Liam', 'Mia', 'Noah', 'Olivia', 'Paul', 'Quincy', 'Rachel', 'Sophia', 'Thomas',
-    'Ursula', 'Victor', 'Wendy', 'Xander', 'Yara', 'Zachary', 'Aiden', 'Bella', 'Carter', 'Daisy', 
-    'Ethan', 'Fiona', 'George', 'Harper', 'Isaac', 'Jasmine', 'Kevin', 'Luna', 'Mason', 'Nora',
-    'Oscar', 'Peyton', 'Quinn', 'Ryan', 'Samantha', 'Tyler', 'Ulysses', 'Violet', 'Willow', 'Xena', 
-    'Yvonne', 'Zane', 'Aaron', 'Brenda', 'Colin', 'Diana', 'Elena', 'Felix', 'Gabriel', 'Hazel',
-    
-    // Muslim/Arabic
-    'Ahmed', 'Amina', 'Fatima', 'Hassan', 'Ibrahim', 'Khadija', 'Layla', 'Mohammed', 'Nadia', 'Omar', 
-    'Rashid', 'Said', 'Tariq', 'Yusuf', 'Zainab', 'Ali', 'Amira', 'Basma', 'Faisal', 'Huda', 
-    'Jamal', 'Karim', 'Leila', 'Mahmoud', 'Nasir', 'Rania', 'Salim', 'Yara', 'Zayd',
-
-    // Hindu/Sanskrit
-    'Aarav', 'Ananya', 'Divya', 'Gaurav', 'Isha', 'Kiran', 'Lakshmi', 'Manish', 'Nisha', 'Rajesh', 
-    'Sanjay', 'Tanvi', 'Vikram', 'Aditi', 'Arjun', 'Bhavana', 'Chandni', 'Dhruv', 'Gita', 'Hari', 
-    'Jaya', 'Krishna', 'Lalita', 'Meera', 'Naveen', 'Parvati', 'Ravi', 'Shivani', 'Vishal',
-
-    // Jewish/Hebrew
-    'Avi', 'Baruch', 'Chana', 'David', 'Eliana', 'Gideon', 'Hannah', 'Isaac', 'Judith', 'Levi', 
-    'Miriam', 'Noam', 'Rachel', 'Samuel', 'Talia', 'Yael', 'Zev', 'Eli', 'Naomi', 'Shoshana',
-
-    // East Asian/Chinese, Japanese, Korean
-    'Akira', 'Hiroshi', 'Kenji', 'Mei', 'Rina', 'Satoshi', 'Takumi', 'Yuki', 'Chen', 'Li', 
-    'Wen', 'Xiao', 'Yan', 'Yu', 'Zhi', 'Jin', 'Min', 'Sun', 'Hye', 'Soo', 
-    'Jung', 'Kang', 'Jin', 'Hyun', 'Ji', 'Dong', 'Eun', 'Ha', 'Yoon',
-
-    // African
-    'Amani', 'Binta', 'Chinua', 'Dayo', 'Ekene', 'Femi', 'Imani', 'Jabari', 'Kofi', 'Lulu', 
-    'Mwangi', 'Nia', 'Olu', 'Penda', 'Sade', 'Tunde', 'Zuri', 'Kwame', 'Aisha', 'Chidi',
-
-    // Native American
-    'Aiyana', 'Chayton', 'Elu', 'Hania', 'Kohana', 'Mika', 'Nayeli', 'Ona', 'Tala', 'Wapi', 
-    'Dakota', 'Cheyenne', 'Sequoyah', 'Takoda', 'Aponi', 'Kaya', 'Tiva', 'Nizhoni', 'Yonah', 'Zuni',
-
-    // South American/Spanish, Portuguese
-    'Carlos', 'Maria', 'Fernando', 'Isabella', 'Julio', 'Lucia', 'Mateo', 'Rosa', 'Santiago', 'Valentina', 
-    'Diego', 'Camila', 'Sebastian', 'Gabriela', 'Miguel', 'Alejandra', 'Eduardo', 'Andrea', 'Juan', 'Pablo',
-
-    // Russian/Eastern European
-    'Anastasia', 'Boris', 'Dmitri', 'Ekaterina', 'Fyodor', 'Galina', 'Igor', 'Katya', 'Leonid', 'Mikhail', 
-    'Nina', 'Olga', 'Pavel', 'Tatiana', 'Vladimir', 'Yuri', 'Svetlana', 'Arkady', 'Marina', 'Sergei',
-
-    // Other Global/International Names
-    'Abigail', 'Benjamin', 'Charlotte', 'Daniel', 'Emma', 'Freya', 'Henry', 'Isabella', 'James', 'Lucas', 
-    'Michael', 'Natalie', 'Oliver', 'Rebecca', 'Sarah', 'Theodore', 'Victoria', 'William', 'Xander', 'Yara'
-    ]
-};
 
 function getRandomName(lang) {
     const languageNames = names[lang] || names.en;
